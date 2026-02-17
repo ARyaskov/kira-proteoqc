@@ -6,6 +6,69 @@ Deterministic, explainable proteostasis QC for single-cell expression data.
 
 - Rust >= 1.95
 
+## Install
+
+Install from crates.io:
+
+```bash
+cargo install kira-proteoqc
+```
+
+
+## Usage examples
+
+Standalone run (single input, per-cell outputs):
+
+```bash
+kira-proteoqc run \
+  --input ./data/pbmc3k \
+  --out ./out/pbmc3k \
+  --mode cell \
+  --json \
+  --tsv
+```
+
+Standalone run (sample mode):
+
+```bash
+kira-proteoqc run \
+  --input ./data/inf \
+  --out ./out/inf \
+  --mode sample \
+  --json \
+  --tsv
+```
+
+Pipeline run (shared cache lookup + pipeline artifacts):
+
+```bash
+kira-proteoqc run \
+  --input ./data/inf \
+  --out ./out/inf \
+  --mode sample \
+  --run-mode pipeline
+```
+
+Validation command:
+
+```bash
+kira-proteoqc validate \
+  --input ./data/inf \
+  --run-mode pipeline
+```
+
+Geneset listing:
+
+```bash
+kira-proteoqc geneset show
+```
+
+Geneset coverage on input:
+
+```bash
+kira-proteoqc geneset show --input ./data/inf
+```
+
 ## Modes
 
 - `--run-mode standalone` (default): existing standalone behavior and outputs.
