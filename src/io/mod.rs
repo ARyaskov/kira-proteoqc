@@ -1,9 +1,8 @@
 use std::fs::File;
-use std::io::{BufWriter, Read};
+use std::io::BufWriter;
 use std::path::Path;
 
 use anyhow::Result;
-use flate2::read::GzDecoder;
 
 use crate::schema::v1::ProteoQcV1;
 
@@ -55,14 +54,4 @@ pub fn write_json(path: &Path, report: &ProteoQcV1) -> Result<()> {
     let writer = BufWriter::new(file);
     serde_json::to_writer_pretty(writer, report)?;
     Ok(())
-}
-
-pub(crate) fn open_maybe_gz(path: &Path) -> Result<Box<dyn Read>> {
-    let file = File::open(path)?;
-    if path.extension().and_then(|s| s.to_str()) == Some("gz") {
-        let decoder = GzDecoder::new(file);
-        Ok(Box::new(decoder))
-    } else {
-        Ok(Box::new(file))
-    }
 }

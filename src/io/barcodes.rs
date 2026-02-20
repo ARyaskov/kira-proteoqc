@@ -1,29 +1,23 @@
-use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 use anyhow::{Result, bail};
-
-use crate::io::open_maybe_gz;
+use kira_scio::api::{Reader, ReaderOptions};
+use kira_scio::detect::DetectedFormat;
 
 pub fn read_barcodes(path: &Path) -> Result<Vec<String>> {
-    let reader = open_maybe_gz(path)?;
-    let mut reader = BufReader::new(reader);
+    let md = Reader::with_options(
+        path,
+        ReaderOptions {
+            force_format: Some(DetectedFormat::Mtx10x),
+            strict: true,
+        },
+    )
+    .read_metadata()
+    .map_err(|e| anyhow::anyhow!(e.message))?;
 
-    let mut barcodes = Vec::new();
-    let mut line = String::new();
-    while reader.read_line(&mut line)? > 0 {
-        let trimmed = line.trim_end();
-        if trimmed.is_empty() {
-            line.clear();
-            continue;
-        }
-        barcodes.push(trimmed.to_string());
-        line.clear();
-    }
-
-    if barcodes.is_empty() {
+    if md.barcodes.is_empty() {
         bail!("barcodes.tsv is empty");
     }
 
-    Ok(barcodes)
+    Ok(md.barcodes)
 }

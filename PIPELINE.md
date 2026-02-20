@@ -20,7 +20,7 @@ Semantics:
 - missing cache: warning emitted, MTX fallback used
 - invalid cache: hard error
 
-Cache format and validation are defined by `CACHE_FILE.md`.
+Cache format specification: [kira-shared-sc-cache/CACHE_FILE.md](https://github.com/ARyaskov/kira-shared-sc-cache/blob/main/CACHE_FILE.md).
 
 ## Pipeline output layout
 

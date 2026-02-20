@@ -1,7 +1,7 @@
 [package]
 name = "kira-proteoqc"
 description = "Deterministic, explainable proteostasis QC for single-cell expression data."
-version = "0.1.0"
+version = "0.1.1"
 rust-version = "1.95"
 edition = "2024"
 license = "MIT"
@@ -34,6 +34,9 @@ thiserror = "1.0"
 time = { version = "0.3", features = ["formatting", "local-offset", "macros"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+kira-shared-sc-cache = "0.1"
+kira-scio = "0.1"
+
 
 [dev-dependencies]
 assert_cmd = "2.0"
@@ -48,4 +51,4 @@ prefetch = []
 cache-block = []
 fusion = []
 fusion-mt = ["mt"]
-hdf5 = ["dep:hdf5"]
+hdf5 = ["dep:hdf5", "kira-scio/h5ad"]

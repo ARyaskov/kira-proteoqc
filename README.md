@@ -76,7 +76,7 @@ kira-proteoqc geneset show --input ./data/inf
 
 ## Pipeline cache lookup
 
-In pipeline mode, `kira-proteoqc` first searches the input directory for shared cache as specified in `CACHE_FILE.md`:
+In pipeline mode, `kira-proteoqc` first searches the input directory for shared cache as specified in [kira-shared-sc-cache/CACHE_FILE.md](https://github.com/ARyaskov/kira-shared-sc-cache/blob/main/CACHE_FILE.md):
 
 - no prefix: `kira-organelle.bin`
 - prefixed dataset: `<PREFIX>.kira-organelle.bin`
@@ -106,5 +106,5 @@ All TSV float values are fixed `%.6f`.
 
 ## Shared cache specification
 
-- Canonical format: `CACHE_FILE.md`
+- Cache format specification: [kira-shared-sc-cache/CACHE_FILE.md](https://github.com/ARyaskov/kira-shared-sc-cache/blob/main/CACHE_FILE.md)
 - Reader validates header/magic/version/endian/header-size/file-bytes, header CRC64-ECMA, section bounds, string tables, and CSC invariants.
