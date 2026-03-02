@@ -230,3 +230,78 @@ Current canonical artifact names:
 
 - JSON fields use `snake_case` except explicit legacy names in standalone score payload (`PCS_raw`, etc.).
 - Metric IDs are stable API surface; changing names requires schema/version bump.
+
+## Proteostasis Extension (Single-sample Compatible)
+
+This extension adds mechanistically grounded transcriptional proxy metrics computed from one normalized scRNA-seq matrix. It is additive to existing outputs.
+
+Panel version:
+
+- `proteo_extension_panel_v1`
+
+Panels (concise subsets):
+
+- Chaperones/folding: `HSPA1A,HSPA5,HSPA8,HSP90AA1,HSP90AB1,HSPB1,DNAJB1,DNAJB6`
+- Proteasome core/regulator subset: `PSMA1,PSMA3,PSMA5,PSMB5,PSMB6,PSMB7,PSMC1,PSMC4,PSMD1,PSMD4`
+- UPR/ER stress axis: `ATF4,ATF6,XBP1,DDIT3,ERN1,EIF2AK3`
+- ERAD support panel: `SEL1L,SYVN1,DERL1,VCP`
+- Aggregation/stress panel: `SQSTM1,UBC,BAG3`
+
+### Core Formulas
+
+For panel `P` and cell `c`, per-gene values are the normalized expression `E[g,c]`:
+
+- `TM(P,c)`: 10% trimmed mean across panel genes
+- If mapped genes `< MIN_GENES`, panel score is `NaN`
+
+Robust normalization:
+
+- `Z = (x - median) / (1.4826 * MAD + eps)`
+- If `MAD == 0`, `Z = 0`
+
+### Added Metrics
+
+- `CCI`: chaperone capacity (robust z of chaperone core)
+- `PCI`: proteasome capacity (robust z of proteasome core)
+- `UPR_A`: UPR activation (robust z of UPR core)
+- `PLS`: `0.6*UPR_A + 0.4*max(0, Z_agg)`; fallback `PLS=UPR_A` when aggregation panel unavailable
+- `SCI`: synthesis-clearance imbalance
+  - preferred: `max(0, Ztranslation - (CCI+PCI)/2)` when translation load is available
+  - fallback: `max(0, UPR_A - (CCI+PCI)/2)`
+- `PCP`: collapse proximity
+  - `PCP = max(0, 0.4*PLS + 0.3*SCI - 0.3*(CCI+PCI)/2)`
+
+### What Each Metric Means
+
+- `CCI` (Chaperone Capacity Index): proxy for folding machinery capacity.
+- `PCI` (Proteasome Capacity Index): proxy for degradation capacity.
+- `UPR_A` (UPR Activation): proxy for ER stress transcriptional activation.
+- `PLS` (Proteotoxic Load Score): UPR-weighted proteotoxic load proxy.
+- `SCI` (Synthesis-Clearance Imbalance): mismatch between synthesis pressure and clearance capacity.
+- `PCP` (Proteostasis Collapse Proximity): composite proxy for nearing proteostasis failure.
+
+### Threshold Flags
+
+- `chaperone_high`: `CCI >= 2.0`
+- `proteasome_high`: `PCI >= 2.0`
+- `upr_active`: `UPR_A >= 1.5`
+- `proteotoxic_high`: `PLS >= 2.0`
+- `imbalance_high`: `SCI >= 1.5`
+- `collapse_risk`: `PCP >= 2.0`
+
+`NaN` scores do not fire flags and are tracked under `missingness`.
+
+### Output Additions
+
+- Per-cell TSV adds columns:
+  - `chaperone_core, proteasome_core, upr_core, agg_core`
+  - `CCI, PCI, UPR_A, PLS, SCI, PCP`
+  - `chaperone_high, proteasome_high, upr_active, proteotoxic_high, imbalance_high, collapse_risk`
+- Pipeline `summary.json` adds `proteostasis_extension` with:
+  - `panel_version, thresholds, global_stats, cluster_stats, top_clusters_by_collapse_risk, missingness`
+
+### Caveats
+
+- These are transcriptional proxies, not direct protein-level measurements.
+- They should not be interpreted as direct proteasome/chaperone biochemical activity assays.
+- Interpretation is strongest when integrated with riboqc and mitoqc outputs.

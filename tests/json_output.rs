@@ -2,7 +2,6 @@ use kira_proteoqc::ctx::Ctx;
 use kira_proteoqc::io::json_writer::build_report;
 use kira_proteoqc::schema::v1::Mode;
 use kira_proteoqc::scores::{AxisRawScores, IntegratedScores, PfsContributions, RiskFlag};
-use serde_json::Value;
 
 #[test]
 fn json_report_populated() {

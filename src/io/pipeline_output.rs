@@ -8,6 +8,7 @@ use serde::Serialize;
 
 use crate::ctx::Ctx;
 use crate::math::reduce::GeneSetReducer;
+use crate::metrics::proteostasis_extension::aggregate::ProteostasisExtensionSummary;
 
 const PIPELINE_DIR: &str = "kira-proteoqc";
 const IO_BUF_CAPACITY: usize = 1 << 20; // 1 MiB
@@ -51,6 +52,7 @@ struct PipelineSummary {
     distributions: SummaryDistributions,
     regimes: Regimes,
     qc: SummaryQc,
+    proteostasis_extension: Option<ProteostasisExtensionSummary>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -128,6 +130,7 @@ fn write_pipeline_cell_tsv(ctx: &Ctx, path: &Path) -> Result<()> {
     } else {
         1
     };
+    let extension = ctx.proteostasis_extension.as_ref().map(|e| &e.scores);
 
     let file =
         File::create(path).with_context(|| format!("failed to create {}", path.display()))?;
@@ -135,7 +138,7 @@ fn write_pipeline_cell_tsv(ctx: &Ctx, path: &Path) -> Result<()> {
 
     writeln!(
         w,
-        "barcode\tsample\tcondition\tspecies\tlibsize\tnnz\texpressed_genes\tproteostasis_load\tmisfolded_protein_burden\tchaperone_capacity\tproteasome_activity_proxy\tprotein_quality_balance\tstress_proteostasis_index\tregime\tflags\tconfidence"
+        "barcode\tsample\tcondition\tspecies\tlibsize\tnnz\texpressed_genes\tproteostasis_load\tmisfolded_protein_burden\tchaperone_capacity\tproteasome_activity_proxy\tprotein_quality_balance\tstress_proteostasis_index\tregime\tflags\tconfidence\tchaperone_core\tproteasome_core\tupr_core\tagg_core\tCCI\tPCI\tUPR_A\tPLS\tSCI\tPCP\tchaperone_high\tproteasome_high\tupr_active\tproteotoxic_high\timbalance_high\tcollapse_risk"
     )?;
 
     let row_indices = if row_mode == RowMode::PerCell {
@@ -167,10 +170,87 @@ fn write_pipeline_cell_tsv(ctx: &Ctx, path: &Path) -> Result<()> {
         } else {
             "sample"
         };
+        let (
+            chaperone_core,
+            proteasome_core,
+            upr_core,
+            agg_core,
+            cci,
+            pci,
+            upr_a,
+            pls,
+            sci,
+            pcp,
+            chaperone_high,
+            proteasome_high,
+            upr_active,
+            proteotoxic_high,
+            imbalance_high,
+            collapse_risk,
+        ) = if let Some(ext) = extension {
+            if row_mode == RowMode::PerCell {
+                (
+                    ext.chaperone_core[idx],
+                    ext.proteasome_core[idx],
+                    ext.upr_core[idx],
+                    ext.agg_core[idx],
+                    ext.cci[idx],
+                    ext.pci[idx],
+                    ext.upr_a[idx],
+                    ext.pls[idx],
+                    ext.sci[idx],
+                    ext.pcp[idx],
+                    ext.chaperone_high[idx],
+                    ext.proteasome_high[idx],
+                    ext.upr_active[idx],
+                    ext.proteotoxic_high[idx],
+                    ext.imbalance_high[idx],
+                    ext.collapse_risk[idx],
+                )
+            } else {
+                (
+                    mean_non_nan(&ext.chaperone_core),
+                    mean_non_nan(&ext.proteasome_core),
+                    mean_non_nan(&ext.upr_core),
+                    mean_non_nan(&ext.agg_core),
+                    mean_non_nan(&ext.cci),
+                    mean_non_nan(&ext.pci),
+                    mean_non_nan(&ext.upr_a),
+                    mean_non_nan(&ext.pls),
+                    mean_non_nan(&ext.sci),
+                    mean_non_nan(&ext.pcp),
+                    fraction_true(&ext.chaperone_high) >= 0.5,
+                    fraction_true(&ext.proteasome_high) >= 0.5,
+                    fraction_true(&ext.upr_active) >= 0.5,
+                    fraction_true(&ext.proteotoxic_high) >= 0.5,
+                    fraction_true(&ext.imbalance_high) >= 0.5,
+                    fraction_true(&ext.collapse_risk) >= 0.5,
+                )
+            }
+        } else {
+            (
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+            )
+        };
 
         writeln!(
             w,
-            "{}\tsample\tunknown\tunknown\t{}\t{}\t{}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{}\t{}\t{:.6}",
+            "{}\tsample\tunknown\tunknown\t{}\t{}\t{}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{}\t{}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{:.6}\t{}\t{}\t{}\t{}\t{}\t{}",
             barcode,
             libsize,
             nnz,
@@ -183,7 +263,23 @@ fn write_pipeline_cell_tsv(ctx: &Ctx, path: &Path) -> Result<()> {
             stress,
             regime,
             flags,
-            confidence
+            confidence,
+            chaperone_core,
+            proteasome_core,
+            upr_core,
+            agg_core,
+            cci,
+            pci,
+            upr_a,
+            pls,
+            sci,
+            pcp,
+            chaperone_high,
+            proteasome_high,
+            upr_active,
+            proteotoxic_high,
+            imbalance_high,
+            collapse_risk
         )?;
     }
     Ok(())
@@ -338,6 +434,10 @@ fn write_summary_json(ctx: &Ctx, path: &Path) -> Result<()> {
             low_confidence_fraction: round6(low_conf as f64 / n.max(1) as f64),
             low_chaperone_signal_fraction: round6(low_chaperone as f64 / n.max(1) as f64),
         },
+        proteostasis_extension: ctx
+            .proteostasis_extension
+            .as_ref()
+            .map(|ext| ext.summary.clone()),
     };
 
     let file =
@@ -449,6 +549,32 @@ fn stats_from_values(values: &mut Vec<f64>) -> DistStats {
 
 fn round6(v: f64) -> f64 {
     (v * 1_000_000.0).round() / 1_000_000.0
+}
+
+fn mean_non_nan(values: &[f32]) -> f32 {
+    let mut sum = 0.0f32;
+    let mut n = 0usize;
+    for &v in values {
+        if v.is_nan() {
+            continue;
+        }
+        sum += v;
+        n += 1;
+    }
+    if n == 0 { f32::NAN } else { sum / n as f32 }
+}
+
+fn fraction_true(flags: &[bool]) -> f32 {
+    if flags.is_empty() {
+        return 0.0;
+    }
+    let mut n = 0usize;
+    for &flag in flags {
+        if flag {
+            n += 1;
+        }
+    }
+    n as f32 / flags.len() as f32
 }
 
 fn sort_f64(values: &mut [f64]) {

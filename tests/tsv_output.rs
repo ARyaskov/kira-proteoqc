@@ -44,4 +44,6 @@ fn tsv_per_cell_format() {
     let lines: Vec<&str> = content.lines().collect();
     assert_eq!(lines.len(), 3);
     assert!(lines[0].starts_with("cell_id\tPCS_raw"));
+    assert!(lines[0].contains("\tCCI\t"));
+    assert!(lines[0].ends_with("\tcollapse_risk"));
 }

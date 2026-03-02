@@ -62,18 +62,40 @@ impl Stage for Stage2H5ad {
 fn build_gene_index(genes: &[String]) -> (HashMap<String, usize>, Vec<String>) {
     let mut index = HashMap::new();
     let mut warnings = Vec::new();
+    let mut duplicate_order: Vec<String> = Vec::new();
+    let mut duplicate_seen: HashMap<String, usize> = HashMap::new();
 
     for (i, symbol) in genes.iter().enumerate() {
-        if let Some(first) = index.get(symbol) {
-            warnings.push(format!(
-                "duplicate gene symbol '{}' at row {} (kept first at row {})",
-                symbol,
-                i + 1,
-                first + 1
-            ));
+        if index.get(symbol).is_some() {
+            let entry = duplicate_seen.entry(symbol.clone()).or_insert(0usize);
+            if *entry == 0 {
+                duplicate_order.push(symbol.clone());
+            }
+            *entry += 1;
         } else {
             index.insert(symbol.clone(), i);
         }
+    }
+
+    if !duplicate_order.is_empty() {
+        let mut parts = Vec::with_capacity(duplicate_order.len());
+        for symbol in duplicate_order {
+            let first_row = index
+                .get(&symbol)
+                .copied()
+                .unwrap_or_default()
+                .saturating_add(1);
+            let dup_count = duplicate_seen.get(&symbol).copied().unwrap_or(0);
+            let total_count = dup_count + 1;
+            parts.push(format!(
+                "{}(x{}, first_row={})",
+                symbol, total_count, first_row
+            ));
+        }
+        warnings.push(format!(
+            "duplicate gene symbols detected (kept first occurrence): {}",
+            parts.join(", ")
+        ));
     }
 
     (index, warnings)

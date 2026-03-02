@@ -6,6 +6,7 @@ pub mod geneset;
 pub mod input;
 pub mod io;
 pub mod math;
+pub mod metrics;
 pub mod pipeline;
 pub mod schema;
 pub mod scores;

@@ -14,6 +14,7 @@ pub mod stage5_math;
 pub mod stage6_axes;
 pub mod stage7_integrate;
 pub mod stage8_risk;
+pub mod stage8b_proteostasis_extension;
 pub mod stage9_timecourse;
 
 pub trait Stage {

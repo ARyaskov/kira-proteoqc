@@ -8,6 +8,7 @@ use crate::expr::layout::ExprHeaderV1;
 use crate::expr::reader;
 use crate::expr::reader::ExprReader;
 use crate::geneset::GenesetCollection;
+use crate::metrics::proteostasis_extension::ProteostasisExtensionResult;
 use crate::schema::v1::{Mode, ProteoQcV1};
 use crate::scores::{AxisRawScores, IntegratedScores, PfsContributions, RiskFlag};
 use crate::scores::{TimecourseResult, TimepointSummary};
@@ -84,6 +85,8 @@ pub struct Ctx {
     pub axis_raw: Option<AxisRawScores>,
     pub integrated_scores: Option<IntegratedScores>,
     pub pfs_contributions: Option<PfsContributions>,
+    pub translation_load_z: Option<Vec<f32>>,
+    pub proteostasis_extension: Option<ProteostasisExtensionResult>,
     pub risk_flags: Vec<RiskFlag>,
     pub timecourse_points: Vec<TimepointSummary>,
     pub timecourse_result: Option<TimecourseResult>,
@@ -143,6 +146,8 @@ impl Ctx {
             axis_raw: None,
             integrated_scores: None,
             pfs_contributions: None,
+            translation_load_z: None,
+            proteostasis_extension: None,
             risk_flags: Vec::new(),
             timecourse_points: Vec::new(),
             timecourse_result: None,

@@ -21,7 +21,7 @@ fn pipeline_tsv_header_order_is_exact() {
         .to_string();
     assert_eq!(
         header,
-        "barcode\tsample\tcondition\tspecies\tlibsize\tnnz\texpressed_genes\tproteostasis_load\tmisfolded_protein_burden\tchaperone_capacity\tproteasome_activity_proxy\tprotein_quality_balance\tstress_proteostasis_index\tregime\tflags\tconfidence"
+        "barcode\tsample\tcondition\tspecies\tlibsize\tnnz\texpressed_genes\tproteostasis_load\tmisfolded_protein_burden\tchaperone_capacity\tproteasome_activity_proxy\tprotein_quality_balance\tstress_proteostasis_index\tregime\tflags\tconfidence\tchaperone_core\tproteasome_core\tupr_core\tagg_core\tCCI\tPCI\tUPR_A\tPLS\tSCI\tPCP\tchaperone_high\tproteasome_high\tupr_active\tproteotoxic_high\timbalance_high\tcollapse_risk"
     );
 }
 
@@ -44,6 +44,12 @@ fn pipeline_summary_json_schema_fields_exist() {
     assert!(v["regimes"]["fractions"].is_object());
     assert!(v["qc"]["low_confidence_fraction"].is_number());
     assert!(v["qc"]["low_chaperone_signal_fraction"].is_number());
+    assert!(v["proteostasis_extension"].is_object());
+    assert!(v["proteostasis_extension"]["panel_version"].is_string());
+    assert!(v["proteostasis_extension"]["thresholds"].is_object());
+    assert!(v["proteostasis_extension"]["global_stats"].is_object());
+    assert!(v["proteostasis_extension"]["cluster_stats"].is_array());
+    assert!(v["proteostasis_extension"]["missingness"].is_object());
 }
 
 #[test]

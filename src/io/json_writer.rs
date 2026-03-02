@@ -135,6 +135,10 @@ pub fn build_report(ctx: &Ctx) -> Result<ProteoQcV1> {
         risk_flags,
         explainability,
         timecourse,
+        proteostasis_extension: ctx
+            .proteostasis_extension
+            .as_ref()
+            .map(|ext| ext.summary.clone()),
     })
 }
 

@@ -1,3 +1,4 @@
+use crate::metrics::proteostasis_extension::aggregate::ProteostasisExtensionSummary;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -131,6 +132,7 @@ pub struct ProteoQcV1 {
     pub risk_flags: Vec<RiskFlag>,
     pub explainability: Explainability,
     pub timecourse: Option<TimecourseResult>,
+    pub proteostasis_extension: Option<ProteostasisExtensionSummary>,
 }
 
 impl ProteoQcV1 {
@@ -163,6 +165,7 @@ impl ProteoQcV1 {
                 pfs_contributions: None,
             },
             timecourse: None,
+            proteostasis_extension: None,
         }
     }
 }

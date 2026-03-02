@@ -17,6 +17,7 @@ use kira_proteoqc::pipeline::stage5_math::Stage5Math;
 use kira_proteoqc::pipeline::stage6_axes::Stage6Axes;
 use kira_proteoqc::pipeline::stage7_integrate::Stage7Integrate;
 use kira_proteoqc::pipeline::stage8_risk::Stage8Risk;
+use kira_proteoqc::pipeline::stage8b_proteostasis_extension::Stage8bProteostasisExtension;
 use kira_proteoqc::pipeline::stage9_timecourse::Stage9Timecourse;
 use kira_proteoqc::pipeline::stage10_output::Stage10Output;
 use kira_proteoqc::schema::v1::Mode;
@@ -105,6 +106,7 @@ fn main() -> Result<()> {
                         Box::new(Stage5Math::new()),
                         Box::new(Stage6Axes::new()),
                         Box::new(Stage7Integrate::new()),
+                        Box::new(Stage8bProteostasisExtension::new()),
                         Box::new(Stage8Risk::new()),
                         Box::new(Stage10Output::new()),
                     ]);
@@ -148,6 +150,7 @@ fn main() -> Result<()> {
                     Box::new(Stage5Math::new()),
                     Box::new(Stage6Axes::new()),
                     Box::new(Stage7Integrate::new()),
+                    Box::new(Stage8bProteostasisExtension::new()),
                     Box::new(Stage8Risk::new()),
                     Box::new(Stage9Timecourse::new()),
                     Box::new(Stage10Output::new()),
@@ -187,6 +190,7 @@ fn main() -> Result<()> {
                 Box::new(Stage5Math::new()),
                 Box::new(Stage6Axes::new()),
                 Box::new(Stage7Integrate::new()),
+                Box::new(Stage8bProteostasisExtension::new()),
                 Box::new(Stage8Risk::new()),
                 Box::new(Stage9Timecourse::new()),
             ]);
